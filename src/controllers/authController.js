@@ -23,7 +23,8 @@ const login = async (req, res) => {
         const user = await authService.loginUser(req.body)
         const token = authService.generateAuthToken(user)
         logger.log('info', 'Generated Token:', token)
-        res.redirect(`/home?token=${token}`)
+        res.cookie('auth-token', token, { httpOnly: true })
+        res.redirect('/home')
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
