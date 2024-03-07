@@ -13,5 +13,6 @@ router.get(
     authMiddleware.verifyToken,
     authController.renderProtectedPage
 )
+router.get('/logout', authController.logout)
 
 module.exports = router

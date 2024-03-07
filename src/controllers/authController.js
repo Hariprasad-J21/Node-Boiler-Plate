@@ -34,10 +34,16 @@ const renderProtectedPage = (req, res) => {
     res.render('home', { username: req.user.username })
 }
 
+const logout = (req, res) => {
+    res.clearCookie('auth-token')
+    res.redirect('/login')
+}
+
 module.exports = {
     renderRegisterForm,
     renderLoginForm,
     register,
     login,
+    logout,
     renderProtectedPage,
 }
