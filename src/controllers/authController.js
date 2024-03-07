@@ -22,7 +22,7 @@ const login = async (req, res) => {
     try {
         const user = await authService.loginUser(req.body)
         const token = authService.generateAuthToken(user)
-        logger.log('info', 'Generated Token:', token)
+        console.log('info', 'Generated Token:', token)
         res.cookie('auth-token', token, { httpOnly: true })
         res.redirect('/home')
     } catch (error) {
