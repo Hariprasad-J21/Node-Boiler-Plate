@@ -1,49 +1,40 @@
 const authService = require('../services/authService')
-const logger = require('../config/logger')
-
-const renderRegisterForm = (req, res) => {
-    res.render('register')
-}
-
-const renderLoginForm = (req, res) => {
-    res.render('login')
-}
+const registerValidation = require('../validations/authValidation')
 
 const register = async (req, res) => {
     try {
-        await authService.registerUser(req.body)
-        res.redirect('/login')
-    } catch (error) {
-        res.status(400).json({ message: error.message })
+        const { error } = registerValidation.validate(req.body)
+        if (error) {
+            return res.status(400).json({ error: error.details[0].message })
+        }
+        const { userName, password } = req.body
+        if (userName && password) {
+            await authService.registerUser(userName, password)
+            res.status(200).json('User is succesfully registered')
+        } else {
+            res.status(404).json('Missing fields in the body')
+        }
+    } catch {
+        ;(error) => {
+            res.status(500).json('Internal Server Error', error)
+        }
     }
 }
 
 const login = async (req, res) => {
     try {
-        const user = await authService.loginUser(req.body)
-        const token = authService.generateAuthToken(user)
-        console.log('info', 'Generated Token:', token)
-        res.cookie('auth-token', token, { httpOnly: true })
-        res.redirect('/home')
-    } catch (error) {
-        res.status(400).json({ message: error.message })
+        const { userName, password } = req.body
+        if (userName && password) {
+            const token = await authService.loginUser(userName, password)
+            res.status(200).json(token)
+        } else {
+            res.status(404).json('Missing fields in the body')
+        }
+    } catch {
+        ;(error) => {
+            res.status(500).json('Internal Server Error', error)
+        }
     }
 }
 
-const renderProtectedPage = (req, res) => {
-    res.render('home', { username: req.user.username })
-}
-
-const logout = (req, res) => {
-    res.clearCookie('auth-token')
-    res.redirect('/login')
-}
-
-module.exports = {
-    renderRegisterForm,
-    renderLoginForm,
-    register,
-    login,
-    logout,
-    renderProtectedPage,
-}
+module.exports = { register, login }

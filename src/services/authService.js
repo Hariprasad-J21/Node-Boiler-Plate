@@ -1,51 +1,37 @@
-const argon2 = require('argon2')
-const jwt = require('jsonwebtoken')
 const User = require('../models/user')
-const { registerValidation } = require('../validations/authValidation')
+const bcrypt = require('bcryptjs')
+const jwt = require('../utils/jwt')
+const logger = require('../config/logger')
 
-require('dotenv').config()
-
-const registerUser = async (userData) => {
-    const { error } = registerValidation.validate(userData)
-    if (error) throw new Error(error.details[0].message)
-
+const registerUser = async (userName, password) => {
     try {
-        const hashedPassword = await argon2.hash(userData.password)
-
-        const user = new User({
-            username: userData.username,
-            password: hashedPassword,
-        })
-
-        const savedUser = await user.save()
-        return savedUser
-    } catch (error) {
-        throw new Error(error.message)
+        const hashedPassword = await bcrypt.hash(password, 10)
+        await User.create({ userName, password: hashedPassword })
+    } catch {
+        ;(error) => {
+            logger.log('error', error)
+            throw new Error('Error registering user')
+        }
     }
 }
 
-const loginUser = async (userData) => {
-    const user = await User.findOne({ where: { username: userData.username } })
-    if (!user) throw new Error('Username not found')
-
+const loginUser = async (userName, password) => {
     try {
-        const validPassword = await argon2.verify(
-            user.password,
-            userData.password
-        )
-        if (!validPassword) throw new Error('Invalid password')
-
-        return user
-    } catch (error) {
-        throw new Error(error.message)
+        const activeUser = await User.findOne({ where: { userName } })
+        if (!activeUser) {
+            throw new Error('No such user found')
+        }
+        const isPassword = bcrypt.compare(password, activeUser.password)
+        if (!isPassword) {
+            throw new Error('Invalid Credentials')
+        }
+        const token = jwt.generateToken(activeUser.id, activeUser.userName)
+        return token
+    } catch {
+        ;(error) => {
+            logger.log('error', error)
+            throw new Error('Error logging user')
+        }
     }
 }
-
-const generateAuthToken = (user) => {
-    return jwt.sign(
-        { id: user.id, username: user.username },
-        process.env.secret_key
-    )
-}
-
-module.exports = { registerUser, loginUser, generateAuthToken }
+module.exports = { registerUser, loginUser }
