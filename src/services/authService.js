@@ -3,10 +3,10 @@ const bcrypt = require('bcryptjs')
 const jwt = require('../utils/jwt')
 const logger = require('../config/logger')
 
-const registerUser = async (userName, password) => {
+const registerUser = async (userName, password, email) => {
     try {
         const hashedPassword = await bcrypt.hash(password, 10)
-        await User.create({ userName, password: hashedPassword })
+        await User.create({ userName, password: hashedPassword, email })
     } catch {
         ;(error) => {
             logger.log('error', error)

@@ -34,7 +34,7 @@ const deleteProfile = async (req, res) => {
         await userService.deleteUserById(userId)
         res.json({ message: 'user deleted successfully' })
     } catch (error) {
-        console.error(error)
+        logger.error(error)
         res.status(500).json({ error: 'Error deleting the user' })
     }
 }
